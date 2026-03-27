@@ -4,23 +4,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.focussentinel.ui.screens.*
 import com.example.focussentinel.ui.theme.FocusSentinelTheme
 
 class MainActivity : ComponentActivity() {
@@ -29,10 +23,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FocusSentinelTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Column(modifier = Modifier.padding(innerPadding)) {
-                        ModifierExperimentsPreview()
-                    }
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    FocusSentinelApp()
                 }
             }
         }
@@ -40,190 +32,70 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+fun FocusSentinelApp(viewModel: MainViewModel = viewModel()) {
+    val navController = rememberNavController()
+    val userState by viewModel.userState.collectAsState()
 
-@Composable
-fun ColumnExample() {
-    Column {
-        Text(text = "Title")
-        Text(text = "Subtitle")
-        Button(onClick = {}) {
-            Text("Start")
-        }
-    }
-}
+    val startDestination = if (userState.isLoggedIn) "dashboard" else "login"
 
-@Composable
-fun RowExample() {
-    Row {
-        Text(text = "Back")
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(text = "FocusSentinel")
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(text = "Settings")
-    }
-}
-
-@Composable
-fun BoxExample() {
-    Box(
-        modifier = Modifier
-            .size(120.dp)
-            .background(Color.LightGray)
+    NavHost(
+        navController = navController,
+        startDestination = startDestination
     ) {
-        Text(
-            text = "Profile",
-            modifier = Modifier.align(Alignment.Center)
-        )
-
-        Box(
-            modifier = Modifier
-                .size(20.dp)
-                .background(Color.Red)
-                .align(Alignment.TopEnd)
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MiniExperimentPreview() {
-    Column(
-        modifier = Modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        ColumnExample()
-        RowExample()
-        BoxExample()
-    }
-}
-
-@Composable
-fun ModifierOrderExample() {
-    Column(modifier = Modifier.padding(16.dp)) {
-
-        Text(
-            text = "Test A: Background → Padding",
-            modifier = Modifier
-                .background(Color.Yellow)
-                .padding(24.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Test B: Padding → Background",
-            modifier = Modifier
-                .padding(24.dp)
-                .background(Color.Cyan)
-        )
-    }
-}
-
-@Composable
-fun WeightExample() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(80.dp)
-    ) {
-
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .background(Color.Red)
-        )
-
-        Box(
-            modifier = Modifier
-                .weight(2f)
-                .fillMaxHeight()
-                .background(Color.Blue)
-        )
-    }
-}
-
-@Composable
-fun AlignmentExample() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("Left Side")
-            Text("Right Side")
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Text(
-            text = "Centered Text",
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ModifierExperimentsPreview() {
-    Column(
-        modifier = Modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(30.dp)
-    ) {
-        ModifierOrderExample()
-        WeightExample()
-        AlignmentExample()
-    }
-}
-@Composable
-fun ImprovedNoteCard() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-
-            Text(
-                text = "Shopping List",
-                style = TextStyle(
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
+        composable("login") {
+            LoginScreen(
+                onLoginSuccess = {
+                    navController.navigate("dashboard") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                viewModel = viewModel
             )
-
-            Text(
-                text = "Milk, Bread, Eggs, Fruits",
-                style = TextStyle(fontSize = 16.sp)
+        }
+        composable("dashboard") {
+            DashboardScreen(
+                viewModel = viewModel,
+                onNavigateToBadges = { navController.navigate("badges") },
+                onNavigateToFocus = { navController.navigate("focus") },
+                onNavigateToChat = { navController.navigate("chat") },
+                onNavigateToLeaderboard = { navController.navigate("leaderboard") },
+                onNavigateToSettings = { navController.navigate("settings") },
+                onLogout = {
+                    navController.navigate("login") {
+                        popUpTo("dashboard") { inclusive = true }
+                    }
+                }
             )
-
-            Text(
-                text = "Updated: Today",
-                style = TextStyle(fontSize = 14.sp, color = Color.Gray)
+        }
+        composable("badges") {
+            BadgesScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("focus") {
+            FocusModeScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("chat") {
+            ChatScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("leaderboard") {
+            LeaderboardScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("settings") {
+            SettingsScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
             )
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ImprovedNoteCardPreview() {
-    ImprovedNoteCard()
 }
